@@ -1,0 +1,13 @@
+note over browser:
+user clicks save button
+- new note is appended to in-memory notes array
+- new note is sent to server
+end note
+
+
+browser->server: HTTP POST https://studies.cs.helsinki.fi/exampleapp/new_note_spa
+note over server:
+server updates data.json by adding comment
+end note
+
+server->browser: 201
