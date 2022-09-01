@@ -21,7 +21,7 @@ const CountryDetailed = ({country}) => {
     }
 
     const weatherImage = weather
-        ?`http://openweathermap.org/img/wn/${weather.weather.icon}@2x.png`
+        ?`http://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`
         : ``;
 
     return (
