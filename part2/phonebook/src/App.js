@@ -2,36 +2,52 @@ import {useState, useEffect} from 'react'
 import NameFilter from "./components/NameFilter";
 import AddNew from "./components/AddNew";
 import Person from "./components/Person";
-import axios from "axios";
+import personService from "./services/persons";
 
 const App = () => {
-    let initialData = [
-        {name: 'Arto Hellas', number: '040-123456', id: 1},
-        {name: 'Ada Lovelace', number: '39-44-5323523', id: 2},
-        {name: 'Dan Abramov', number: '12-43-234345', id: 3},
-        {name: 'Mary Poppendieck', number: '39-23-6423122', id: 4}
-    ];
     const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
     const [newFilter, setNewFilter] = useState('')
 
-    const [filteredPersons, setFilteredPersons] = useState(initialData);
+    const [filteredPersons, setFilteredPersons] = useState([]);
 
     useEffect(() => {
-        axios.get('http://localhost:3001/persons')
-            .then(({data}) => setPersons(data))
+        personService.getAll()
+            .then(data => {
+                setPersons(data);
+                setFilteredPersons(data);
+            });
     }, []);
 
     const addName = (event) => {
         event.preventDefault();
-        if (persons.find((person) => person.name === newName)) {
-            alert(`${newName} is already in the phonebook`);
+        let existing = persons.find((person) => person.name === newName);
+        if (existing) {
+            const update = window.confirm(`${newName} is already in the phonebook, replace the old number with a new one?`);
+            if (update) {
+                const updatedPerson = {name: newName, number: newNumber, id: existing.id};
+                personService.update(updatedPerson)
+                    .then(() => {
+                        setPersons([ ...persons.filter(p => p.id !== updatedPerson.id), updatedPerson]);
+                        setFilteredPersons([...filteredPersons.filter(p => p.id !== updatedPerson.id), updatedPerson])
+                    });
+            }
         } else {
-            let newPerson = {name: newName, number: newNumber, id: persons.length + 1};
-            setPersons(persons.concat(newPerson));
-            setFilteredPersons(filteredPersons.concat(newPerson));
+            let newPerson = {name: newName, number: newNumber};
+            personService.add(newPerson).then(data => {
+                setPersons(persons.concat(data));
+                setFilteredPersons(filteredPersons.concat(data));
+            });
         }
+    }
+
+    const deleteName = (id) => {
+        personService.deleteUser(id)
+            .then(() => {
+                setPersons(persons.filter(p => p.id != id));
+                setFilteredPersons(filteredPersons.filter(p => p.id != id));
+            });
     }
 
     const handleNameChange = (event) => {
@@ -67,7 +83,12 @@ const App = () => {
                 handleNumberChange={handleNumberChange}
             />
             <h2>Numbers</h2>
-            {filteredPersons.map(person => <Person name={person.name} number={person.number} key={person.id} />)}
+            {
+                filteredPersons.map(person => <Person name={person.name}
+                                                   number={person.number}
+                                                   deleteUser={() => deleteName(person.id)}
+                                                   key={person.id} />)
+            }
         </div>
     )
 }
