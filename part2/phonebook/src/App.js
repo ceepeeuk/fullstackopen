@@ -3,12 +3,15 @@ import NameFilter from "./components/NameFilter";
 import AddNew from "./components/AddNew";
 import Person from "./components/Person";
 import personService from "./services/persons";
+import Notification from "./components/Notification";
+import './index.css';
 
 const App = () => {
     const [persons, setPersons] = useState([]);
     const [newName, setNewName] = useState('')
     const [newNumber, setNewNumber] = useState('')
     const [newFilter, setNewFilter] = useState('')
+    const [errorMessage, setErrorMessage] = useState('')
 
     const [filteredPersons, setFilteredPersons] = useState([]);
 
@@ -19,6 +22,12 @@ const App = () => {
                 setFilteredPersons(data);
             });
     }, []);
+
+    const updateNotification = (message) => {
+        setErrorMessage(message);
+        setTimeout(() => setErrorMessage(null), 1000);
+
+    };
 
     const addName = (event) => {
         event.preventDefault();
@@ -31,6 +40,12 @@ const App = () => {
                     .then(() => {
                         setPersons([ ...persons.filter(p => p.id !== updatedPerson.id), updatedPerson]);
                         setFilteredPersons([...filteredPersons.filter(p => p.id !== updatedPerson.id), updatedPerson])
+                    })
+                    .catch(e => {
+                      const message = e.response.status === 404
+                        ? `Information of ${newName} has already been removed from the server`
+                        : `Unknown error occurred`;
+                      updateNotification(message);
                     });
             }
         } else {
@@ -38,6 +53,7 @@ const App = () => {
             personService.add(newPerson).then(data => {
                 setPersons(persons.concat(data));
                 setFilteredPersons(filteredPersons.concat(data));
+                updateNotification(`Added ${newName}`);
             });
         }
     }
@@ -45,8 +61,8 @@ const App = () => {
     const deleteName = (id) => {
         personService.deleteUser(id)
             .then(() => {
-                setPersons(persons.filter(p => p.id != id));
-                setFilteredPersons(filteredPersons.filter(p => p.id != id));
+                setPersons(persons.filter(p => p.id !== id));
+                setFilteredPersons(filteredPersons.filter(p => p.id !== id));
             });
     }
 
@@ -73,7 +89,8 @@ const App = () => {
     return (
         <div>
             <h2>Phonebook</h2>
-            < NameFilter newFilter={newFilter} handleFilterChange={handleFilterChange} />
+            <Notification message={errorMessage} />
+            <NameFilter newFilter={newFilter} handleFilterChange={handleFilterChange} />
             <h2>Add a new</h2>
             <AddNew
                 addName={addName}
