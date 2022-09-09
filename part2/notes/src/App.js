@@ -1,6 +1,6 @@
 import Note from './components/Note'
 import { useState, useEffect } from "react";
-import axios from "axios";
+import notesService from "./services/notes";
 
 const App = () => {
     const [notes, setNotes] = useState([]);
@@ -8,8 +8,7 @@ const App = () => {
     const [showAll, setShowAll] = useState(true);
 
     useEffect(() => {
-        axios
-            .get('http://localhost:3001/notes')
+        notesService.getAll()
             .then(({data}) => setNotes(data));
     }, [])
 
@@ -22,8 +21,10 @@ const App = () => {
             id: notes.length + 1,
         }
 
-        setNotes(notes.concat(noteObject));
-        setNewNote('');
+        notesService.create(noteObject).then(() => {
+            setNotes(notes.concat(noteObject));
+            setNewNote('')
+        });
     }
 
     const handleNoteChange = (event) => {
