@@ -54,6 +54,9 @@ const App = () => {
                 setPersons(persons.concat(data));
                 setFilteredPersons(filteredPersons.concat(data));
                 updateNotification(`Added ${newName}`);
+            }).catch((e) => {
+                const message = e?.response?.data?.error;
+                updateNotification(message);
             });
         }
     }
